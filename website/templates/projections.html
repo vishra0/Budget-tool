@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container">
+    <h1>Transaction Projections</h1>
+
+    <!-- Total Transactions Graph -->
+    <div class="graph">
+        <h2>Total Projections</h2>
+        <img src="data:image/png;base64,{{ total_graph }}" alt="Total Projections">
+    </div>
+
+    <!-- Category-wise Graphs -->
+    <div class="category-graphs">
+        <h2>Category Projections</h2>
+        {% for category, graph in category_graphs.items() %}
+            <div class="graph">
+                <h3>{{ category }}</h3>
+                <img src="data:image/png;base64,{{ graph }}" alt="{{ category }} Projections">
+            </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

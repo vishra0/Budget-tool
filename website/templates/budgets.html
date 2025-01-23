@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+
+{% block title %}Budgets{% endblock %}
+
+{% block content %}
+<h1 align="center">Budgets</h1>
+
+<!-- Budgets Table -->
+<table class="table">
+  <thead>
+    <tr>
+      <th>Period</th>
+      <th>Target Amount</th>
+      <th>Spent</th>
+      <th>Remaining</th>
+      <th>Completion</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for budget in user.budgets %}
+    <tr>
+      <td>{{ budget.period }}</td>
+      <td>${{ budget.target_amount }}</td>
+      <td>${{ budget.spent_amount }}</td>
+      <td>${{ budget.target_amount - budget.spent_amount }}</td>
+      <td>
+        <div class="progress">
+            <div 
+                class="progress-bar {{ 'bg-danger' if budget.spent_amount > budget.target_amount else 'bg-success' }}" 
+                role="progressbar" 
+                style="width: {{ (budget.spent_amount / budget.target_amount * 100) if budget.target_amount > 0 else 0 }}%;" 
+                aria-valuenow="{{ budget.spent_amount }}" 
+                aria-valuemin="0" 
+                aria-valuemax="{{ budget.target_amount }}">
+                {% if budget.target_amount > 0 %}
+                    {{ (budget.spent_amount / budget.target_amount * 100)|round(2) }}%
+                {% else %}
+                    0%
+                {% endif %}
+            </div>
+        </div>
+    </td>
+    
+    
+    
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+
+<!-- Button to trigger modal -->
+<div align="center">
+  <button class="btn btn-primary" onclick="document.getElementById('budgetModal').showModal()">Add Budget</button>
+</div>
+
+<!-- Modal -->
+<dialog id="budgetModal">
+  <h3>Add Budget</h3>
+  <form method="POST" action="/add_budget">
+    <div class="form-group">
+      <label for="period">Period</label>
+      <select class="form-control" id="period" name="period" required>
+        <option value="weekly">Weekly</option>
+        <option value="monthly">Monthly</option>
+        <option value="yearly">Yearly</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label for="target_amount">Target Amount</label>
+      <input type="number" class="form-control" id="target_amount" name="target_amount" required>
+    </div>
+    <div class="form-group" align="center">
+      <button type="submit" class="btn btn-success">Create</button>
+      <button type="button" class="btn btn-secondary" onclick="document.getElementById('budgetModal').close()">Cancel</button>
+    </div>
+  </form>
+</dialog>
+
+{% endblock %}

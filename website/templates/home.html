@@ -1,0 +1,181 @@
+{% extends "base.html" %}
+
+{% block title %}Home{% endblock %}
+
+{% block content %}
+<h1 align="center">Transactions</h1>
+
+<!-- Transactions Table -->
+<table class="table" id="transactionsTable">
+  <thead>
+    <tr>
+      <th>Category</th>
+      <th>Amount</th>
+      <th>Time</th>
+      <th>Action</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for transaction in user.transactions %}
+    <tr>
+      <td>{{ transaction.category }}</td>
+      <td>{{ transaction.amount }}</td>
+      <td>{{ transaction.date }}</td>
+      <td>
+        <button class="btn btn-danger btn-sm" onClick="deleteTransaction({{ transaction.id }})">Delete</button>
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+
+<!-- Button to trigger Add Transaction Modal -->
+<div align="center">
+  <button class="btn btn-primary" onclick="document.getElementById('transactionModal').showModal()">Add Transaction</button>
+</div>
+
+<!-- Add Transaction Modal -->
+<!-- Add Transaction Modal -->
+<dialog id="transactionModal">
+  <h3>Add Transaction</h3>
+  <form method="POST" action="/">
+    <div class="form-group">
+      <label for="category">Category</label>
+      <select class="form-control" id="category" name="category" required>
+        <option value="Food and Dining">Food and Dining</option>
+        <option value="Personal Care and Grooming">Personal Care and Grooming</option>
+        <option value="Technology and Electronics">Technology and Electronics</option>
+        <option value="Clothing and Apparel">Clothing and Apparel</option>
+        <option value="Entertainment and Leisure">Entertainment and Leisure</option>
+        <option value="Health and Wellness">Health and Wellness</option>
+        <option value="Transportation">Transportation</option>
+        <option value="Housing and Living">Housing and Living</option>
+        <option value="Education and Learning">Education and Learning</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label for="amount">Amount</label>
+      <input type="number" class="form-control" id="amount" name="amount" required>
+    </div>
+    <div class="form-group">
+      <label for="time">Time</label>
+      <input type="datetime-local" class="form-control" id="time" name="time" required>
+    </div>
+    <div class="form-group">
+      <label for="account_id">Account</label>
+      <select class="form-control" id="account_id" name="account_id" required>
+        {% for account in user.accounts %}
+        <option value="{{ account.id }}">{{ account.name }} (Balance: {{ account.balance }})</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="form-group" align="center">
+      <button type="submit" class="btn btn-success">Create</button>
+      <button type="button" class="btn btn-secondary" onclick="document.getElementById('transactionModal').close()">Cancel</button>
+    </div>
+  </form>
+</dialog>
+
+
+<!-- Confirm Transaction Modal -->
+<dialog id="confirmTransactionModal">
+  <h3>Confirm Transaction</h3>
+  <form method="POST" action="/add_transaction">
+    <div class="form-group">
+      <label for="category">Category</label>
+      <select class="form-control" id="category" name="category" required>
+        <option value="Food and Dining">Food and Dining</option>
+        <option value="Personal Care and Grooming">Personal Care and Grooming</option>
+        <option value="Technology and Electronics">Technology and Electronics</option>
+        <option value="Clothing and Apparel">Clothing and Apparel</option>
+        <option value="Entertainment and Leisure">Entertainment and Leisure</option>
+        <option value="Health and Wellness">Health and Wellness</option>
+        <option value="Transportation">Transportation</option>
+        <option value="Housing and Living">Housing and Living</option>
+        <option value="Education and Learning">Education and Learning</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label for="amount">Amount</label>
+      <input type="number" class="form-control" id="amount" name="amount" readonly>
+    </div>
+    <div class="form-group">
+      <label for="time">Time</label>
+      <input type="datetime-local" class="form-control" id="time" name="time" required>
+    </div>
+    <div class="form-group">
+      <label for="account_id">Account</label>
+      <select class="form-control" id="account_id" name="account_id" required>
+        {% for account in user.accounts %}
+        <option value="{{ account.id }}">{{ account.name }} (Balance: {{ account.balance }})</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="form-group" align="center">
+      <button type="submit" class="btn btn-success">Add Transaction</button>
+      <button type="button" class="btn btn-secondary" onclick="document.getElementById('confirmTransactionModal').close()">Cancel</button>
+    </div>
+  </form>
+</dialog>
+<!-- Add the receipt upload form -->
+<form id="upload-receipt-form" method="POST" enctype="multipart/form-data">
+  <input type="file" name="receipt_image" id="receipt_image" required>
+  <button type="submit" align = "center">Upload Receipt</button>
+</form>
+
+<!-- Modal for confirming transaction -->
+<div id="transaction-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.5);">
+  <div style="margin: 15% auto; padding: 20px; background: white; width: 50%; text-align: center;">
+      <h3>Confirm Transaction</h3>
+      <form id="confirm-transaction-form" method="POST" action="/add_transaction">
+          <input type="hidden" name="category" id="modal-category">
+          <input type="hidden" name="amount" id="modal-amount">
+
+          <label for="modal-time">Date and Time</label>
+          <input type="datetime-local" name="time" id="modal-time" required><br>
+
+          <label for="modal-account">Select Account</label>
+          <select name="account_id" id="modal-account" required>
+              {% for account in user.accounts %}
+                  <option value="{{ account.id }}">{{ account.name }} - ${{ account.balance }}</option>
+              {% endfor %}
+          </select><br><br>
+
+          <button type="submit">Confirm</button>
+          <button type="button" id="close-modal">Cancel</button>
+      </form>
+  </div>
+</div>
+
+<script>
+  document.getElementById("upload-receipt-form").addEventListener("submit", async (event) => {
+      event.preventDefault();
+
+      const formData = new FormData(event.target);
+
+      const response = await fetch("/upload_receipt", {
+          method: "POST",
+          body: formData,
+      });
+
+      const result = await response.json();
+      if (result.success) {
+          // Populate modal with data
+          document.getElementById("modal-category").value = result.category;
+          document.getElementById("modal-amount").value = result.amount;
+          document.getElementById("transaction-modal").style.display = "block";
+      } else {
+          alert(result.message);
+      }
+  });
+
+  document.getElementById("close-modal").addEventListener("click", () => {
+      document.getElementById("transaction-modal").style.display = "none";
+  });
+</script>
+
+
+
+
+
+{% endblock %}
